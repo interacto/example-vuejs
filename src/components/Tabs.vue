@@ -1,9 +1,9 @@
 <template>
   <div class="tabs">
     <ul class="tabBar">
-      <li v-for="tab in tabs" :key="tab.props.title">
-        <button v-if="!tab.props.isActive" @click="this.selectTab(tab.props.title)" class="inactive-tab">{{tab.props.title}}</button>
-        <button v-if="tab.props.isActive" @click="this.selectTab(tab.props.title)" class="active-tab">{{tab.props.title}}</button>
+      <li v-for="tab in state.tabs" :key="tab.props.title">
+        <button v-if="tab.props.title !== state.currentTab" @click="selectTab(tab.props.title)" class="inactive-tab">{{tab.props.title}}</button>
+        <button v-if="tab.props.title === state.currentTab" @click="selectTab(tab.props.title)" class="active-tab">{{tab.props.title}}</button>
       </li>
     </ul>
     <slot></slot>
@@ -11,32 +11,37 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, VNode} from "vue";
-//
-// interface TabProp {
-//   title: string,
-//   isActive: boolean
-// }
+import {defineComponent, ref, VNode, reactive, provide} from "vue";
+
+export interface TabsState {
+  currentTab: string,
+  tabs: VNode[]
+}
 
 export default defineComponent ({
-  data () {
+  setup(props, context) {
+    let currentTab = ref('');
+    let tabs = ref<VNode[]>([]);
+
+    const state = reactive<TabsState>({
+      currentTab: '',
+      tabs: []
+    });
+    provide("TabsProvider", state);
+
+    state.tabs = context.slots.default!();
+    state.currentTab = state.tabs[0].props!.title;
+
+    const selectTab = (title: string) => {
+      state.currentTab = title;
+    };
+
     return {
-      currentTab: '', // the title of the selected tab,
-      tabs: [] as VNode[] // all of the tabs
-    }
-  },
-
-  created () {
-      this.tabs = this.$slots!.default!();
-      this.currentTab = this.tabs[0].props!.title;
-      this.tabs[0].props!.isActive = true;
-  },
-
-  methods: {
-    selectTab(title: string) {
-      this.currentTab = title;
-      this.tabs.forEach(tab => tab.props!.isActive = this.currentTab === tab.props!.title);
-    }
+      currentTab,
+      tabs,
+      state,
+      selectTab
+    };
   }
 })
 </script>

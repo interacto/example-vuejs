@@ -1,10 +1,10 @@
 <template>
   <div>
-    <div class="preview" ref="preview">
-      <p></p>
-      <svg class="preview-canvas">
-      </svg>
-    </div>
+<!--    <div class="preview" ref="preview">-->
+<!--      <p></p>-->
+<!--      <svg class="preview-canvas">-->
+<!--      </svg>-->
+<!--    </div>-->
 
     <div class="history">
       <div class="header">
@@ -13,19 +13,16 @@
         <button class="button-undo-redo" ref="redoButton">REDO</button>
       </div>
 
+
       <div class="buttons">
         <button class="history-button-active" ref="baseStateButton">Start</button>
 
-<!--        <div ref={this.undoButtonContainer}>-->
-<!--          {this.state.bindings.undoHistory.getUndo().map((elt, index) =>-->
-<!--          <button className="history-button-active" key={index} ref={(ref) => this.undoButtons[index] = ref as HTMLButtonElement}>{elt.getUndoName()}</button>-->
-<!--          )}-->
-<!--        </div>-->
+        <div ref="undoButtonContainer">
+          <button v-for="(undoable, index) in bindings.undoHistory.getUndo()" class="history-button-active" :key="index">{{undoable.getUndoName()}}</button>
+        </div>
 
         <div ref="redoButtonContainer">
-          {this.state.bindings.undoHistory.getRedo().slice().reverse().map((elt, index) =>
-          <button class="history-button-inactive" key={index}>{elt.getUndoName()}</button>
-          )}
+          <button v-for="(undoable, index) in bindings.undoHistory.getRedo()" class="history-button-inactive" :key="index">{{undoable.getUndoName()}}</button>
         </div>
       </div>
     </div>
@@ -34,7 +31,7 @@
       <h1>An Interacto-React app</h1>
       <Tabs>
         <Tab title="Type some text">
-          <textarea value={this.state.textFieldValue} onChange={this.onTextChange} ref="textArea"/>
+          <textarea ref="textArea" :value="dataService.txt"></textarea>
           <br/>
           <button class="clearTextButton" ref="clearTextButton">Clear text</button>
           <br/><br/>
@@ -49,42 +46,38 @@
           </p>
           <br/>
 
-          <svg width="1000" height="600" style="border:1px solid black" ref={this.canvas}>
+          <svg width="1000" height="600" style="border:1px solid black" ref="canvas">
           </svg>
         </Tab>
 
         <Tab title="Drag the cards">
-<!--          <div class="cards-block" ref={this.cards1}>-->
-<!--              {this.state.cards1.map(card =>-->
-<!--                  <Card class="cards" key={card.title}>-->
-<!--                      <div>-->
-<!--                          <p>{card.title}</p>-->
-<!--                          <p>{card.subTitle}</p>-->
-<!--                      </div>-->
-<!--                      <div>-->
-<!--                          <p>-->
-<!--                              {card.text}-->
-<!--                          </p>-->
-<!--                      </div>-->
-<!--                  </Card>-->
-<!--              )}-->
-<!--          </div>-->
+          <div class="cards-block" ref="cards1">
+            <div v-for="(card, index) in dataService.cards1" class="cards" :key=index>
+              <div>
+                <div class="md-title">{{card.title}}</div>
+                <div class="md-subhead">{{card.subTitle}}</div>
+              </div>
+              <div>
+                <p>
+                  {{card.text}}
+                </p>
+              </div>
+            </div>
+          </div>
 
-<!--          <div class="cards-block" ref={this.cards2}>-->
-<!--              {this.state.cards2.map(card =>-->
-<!--                  <Card class="cards" key={card.title}>-->
-<!--                      <div>-->
-<!--                          <p>{card.title}</p>-->
-<!--                          <p>{card.subTitle}</p>-->
-<!--                      </div>-->
-<!--                      <div>-->
-<!--                          <p>-->
-<!--                              {card.text}-->
-<!--                          </p>-->
-<!--                      </div>-->
-<!--                  </Card>-->
-<!--              )}-->
-<!--          </div>-->
+          <div class="cards-block" ref="cards2">
+            <div v-for="(card, index) in dataService.cards2" class="cards" :key=index>
+              <div>
+                <div class="md-title">{{card.title}}</div>
+                <div class="md-subhead">{{card.subTitle}}</div>
+              </div>
+              <div>
+                <p>
+                  {{card.text}}
+                </p>
+              </div>
+            </div>
+          </div>
         </Tab>
       </Tabs>
     </div>
@@ -93,10 +86,10 @@
 
 <script lang="ts">
 /* eslint-disable no-unused-vars */
-import {defineComponent, onMounted} from "vue";
+import {defineComponent, onMounted, reactive, Ref} from "vue";
 import Tab from "@/components/Tab.vue";
 import Tabs from "@/components/Tabs.vue";
-import {BindingsImpl, Redo, Undo} from "interacto";
+import {Bindings, BindingsImpl, Redo, Undo} from "interacto";
 import {ref} from 'vue';
 import {ClearText} from "@/command/ClearText";
 import {SetText} from "@/command/SetText";
@@ -107,6 +100,37 @@ import {DeleteElt} from "@/command/DeleteElt";
 import {ChangeColor} from "@/command/ChangeColor";
 import {DrawRect} from "@/command/DrawRect";
 
+type MyCard = {
+  title: string,
+  subTitle: string,
+  text: string
+}
+
+export type DataService = {
+  txt: string,
+  cards1: Array<MyCard>,
+  cards2: Array<MyCard>,
+};
+
+let appData: DataService = {
+  txt: "foo",
+  cards1: [{
+    title: 'card 1',
+    subTitle: 'The card 1',
+    text: 'Some text for card 1'
+  },
+    {
+      title: 'card 2',
+      subTitle: 'The card 2',
+      text: 'Some text for card 2'
+    }],
+  cards2: [{
+    title: 'card 3',
+    subTitle: 'The card 3',
+    text: 'Some text for card 3'
+  }],
+}
+
 export default defineComponent ({
   components: {
     Tab,
@@ -114,57 +138,57 @@ export default defineComponent ({
   },
   setup() {
     let bindings = ref(new BindingsImpl());
+    let txt = ref('');
+    let dataService = reactive(appData);
 
     let clearTextButton = ref(null);
     let textArea = ref(null);
     let undoButton = ref(null);
     let redoButton = ref(null);
-    let undoButtonContainer = ref(null);
-    let redoButtonContainer = ref(null);
+    let undoButtonContainer: Ref<HTMLDivElement | undefined> = ref(undefined);
+    let redoButtonContainer: Ref<HTMLDivElement | undefined> = ref(undefined);
     let baseStateButton = ref(null);
     let canvas = ref(null);
     let cards1 = ref(null);
     let cards2 = ref(null);
     let preview = ref(null);
-    // undoButtons: Array<HTMLButtonElement> = [];
 
     const setupBindings = () => {
-      // bindings.value.buttonBinder()
-      //     .on(this.clearTextButton.value!)
-      //     .toProduce(() => new ClearText(this, 'txt' as keyof Readonly<{}>, 'textFieldValue' as keyof Readonly<{}>))
-      //     .bind();
-      //
-      // bindings.value.textInputBinder()
-      //     .on(this.textArea.value!)
-      //     .toProduce(() => new SetText(this, 'txt' as keyof Readonly<{}>, 'textFieldValue' as keyof Readonly<{}>))
-      //     .then((c, i) => c.text = (i.widget as HTMLInputElement).value)
-      //     .end(() => this.forceUpdate())
-      //     .bind();
+      bindings.value.buttonBinder()
+          .on(clearTextButton.value!)
+          .toProduce(() => new ClearText(dataService))
+          .bind();
 
-      // bindings.value.buttonBinder()
-      //     .on(undoButton.value!)
-      //     .toProduce(() => new Undo(this.state.bindings.undoHistory))
-      //     .bind();
-      //
-      // bindings.value.buttonBinder()
-      //     .on(redoButton.value!)
-      //     .toProduce(() => new Redo(bindings.value.undoHistory))
-      //     .bind();
+      bindings.value.textInputBinder()
+          .on(textArea.value!)
+          .toProduce(() => new SetText(dataService))
+          .then((c, i) => c.text = (i.widget as HTMLInputElement).value)
+          .bind();
 
-      // bindings.value.buttonBinder()
-      //     .on(this.baseStateButton.value!)
-      //     .toProduce(() => new HistoryBackToStart(this.state.bindings.undoHistory))
-      //     .bind();
+      bindings.value.buttonBinder()
+          .on(undoButton.value!)
+          .toProduce(() => new Undo(bindings.value.undoHistory))
+          .bind();
 
-      // bindings.value.buttonBinder()
-      //     .onDynamic(this.undoButtonContainer.value!)
-      //     .toProduce(i => new HistoryGoBack(Array.from(undoButtonContainer.value!.childNodes).indexOf(i.widget!), this.state.bindings.undoHistory))
-      //     .bind();
-      //
-      // bindings.value.buttonBinder()
-      //     .onDynamic(this.redoButtonContainer.value!)
-      //     .toProduce(i => new HistoryGoForward(Array.from(redoButtonContainer.value!.childNodes).indexOf(i.widget!), this.state.bindings.undoHistory))
-      //     .bind();
+      bindings.value.buttonBinder()
+          .on(redoButton.value!)
+          .toProduce(() => new Redo(bindings.value.undoHistory))
+          .bind();
+
+      bindings.value.buttonBinder()
+          .on(baseStateButton.value!)
+          .toProduce(() => new HistoryBackToStart(bindings.value.undoHistory))
+          .bind();
+
+      bindings.value.buttonBinder()
+          .onDynamic(undoButtonContainer.value!)
+          .toProduce(i => new HistoryGoBack(Array.from(undoButtonContainer.value!.childNodes).indexOf(i.widget!) - 1, bindings.value.undoHistory))
+          .bind();
+
+      bindings.value.buttonBinder()
+          .onDynamic(redoButtonContainer.value!)
+          .toProduce(i => new HistoryGoForward(Array.from(redoButtonContainer.value!.childNodes).indexOf(i.widget!) - 1, bindings.value.undoHistory))
+          .bind();
 
       bindings.value.tapBinder(3)
           .toProduce(i => new ChangeColor(i.taps[0].currentTarget  as SVGElement))
@@ -198,6 +222,7 @@ export default defineComponent ({
 
     return {
       bindings,
+      txt,
       clearTextButton,
       textArea,
       undoButton,
@@ -208,7 +233,8 @@ export default defineComponent ({
       canvas,
       cards1,
       cards2,
-      preview
+      preview,
+      dataService
     }
   }
 })

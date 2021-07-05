@@ -7,20 +7,32 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
+import {defineComponent, inject, ref, watch} from "vue";
+import {TabsState} from "@/components/Tabs.vue";
 
 export default defineComponent ({
   props: {
     title: {
       type: String,
       default: 'Tab'
-    }
+    },
   },
+  setup(props) {
+    const isActive = ref(false);
 
-  data () {
+    const tabs: TabsState | undefined = inject('TabsProvider');
+    watch(
+        () => tabs!.currentTab,
+        () => {
+          isActive.value = props.title === tabs!.currentTab;
+        }
+    );
+
+    isActive.value = props.title === tabs!.currentTab;
+
     return {
-      isActive: true
-    }
+      isActive
+    };
   }
 })
 </script>

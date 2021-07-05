@@ -1,8 +1,8 @@
 import {UndoableCommand} from 'interacto';
-import {DataService} from '../service/data.service';
+import {DataService} from '@/App.vue';
 
 export class SetText extends UndoableCommand {
-    private memento: string;
+    private memento: string = '';
 
     public constructor(private data: DataService, private newText?: string) {
         super();

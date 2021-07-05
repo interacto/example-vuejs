@@ -1,32 +1,30 @@
 import {UndoableCommand} from 'interacto';
-import {Component} from 'react';
+import {DataService} from '@/App.vue';
 
 export class ClearText extends UndoableCommand {
     private memento: string = '';
 
-    public constructor(private component: Component, private readonly text: keyof Readonly<{}>, private readonly textFieldValue: keyof Readonly<{}>) {
+    public constructor(private data: DataService) {
         super();
     }
 
-    protected createMemento() {
-        this.memento = this.component.state[this.text];
+    protected createMemento(): void {
+        this.memento = this.data.txt;
     }
 
-    protected execution() {
-        this.component.setState({[this.textFieldValue]: ''});
-        this.component.setState({[this.text]: ''});
+    protected execution(): void {
+        this.data.txt = '';
     }
 
-    public undo() {
-        this.component.setState({[this.text]: this.memento});
-        this.component.setState({[this.textFieldValue]: this.memento});
+    public undo(): void {
+        this.data.txt = this.memento;
     }
 
-    public redo() {
+    public redo(): void {
         this.execution();
     }
 
-    public getUndoName() {
+    public getUndoName(): string {
         return 'Clear text';
     }
 }
