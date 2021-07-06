@@ -89,7 +89,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, onMounted, Ref} from "vue";
+import {defineComponent, onMounted, provide, Ref} from "vue";
 import Tab from "@/components/Tab.vue";
 import Tabs from "@/components/Tabs.vue";
 import {BindingsImpl, Redo, Undo, TransferArrayItem} from "interacto";
@@ -144,20 +144,23 @@ export default defineComponent ({
   },
 
   setup() {
-    let bindings = ref(new BindingsImpl());
-    let dataService = ref(appData);
+    const bindings = ref(new BindingsImpl());
+    // Could be used to pass the bindings to other components
+    provide("BindingsProvider", bindings);
 
-    let clearTextButton = ref(null);
-    let textArea = ref(null);
-    let undoButton = ref(null);
-    let redoButton = ref(null);
-    let undoButtonContainer: Ref<HTMLDivElement | undefined> = ref(undefined);
-    let redoButtonContainer: Ref<HTMLDivElement | undefined> = ref(undefined);
-    let baseStateButton = ref(null);
-    let canvas = ref(null);
-    let cards1 = ref(null);
-    let cards2 = ref(null);
-    let preview = ref<HTMLDivElement | undefined>(undefined);
+    const dataService = ref(appData);
+
+    const clearTextButton = ref(null);
+    const textArea = ref(null);
+    const undoButton = ref(null);
+    const redoButton = ref(null);
+    const undoButtonContainer: Ref<HTMLDivElement | undefined> = ref(undefined);
+    const redoButtonContainer: Ref<HTMLDivElement | undefined> = ref(undefined);
+    const baseStateButton = ref(null);
+    const canvas = ref(null);
+    const cards1 = ref(null);
+    const cards2 = ref(null);
+    const preview = ref<HTMLDivElement | undefined>(undefined);
 
     // For the card drag-and-drop
     let mementoX: string;
